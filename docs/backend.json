@@ -1,0 +1,180 @@
+{
+  "entities": {
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User Profile",
+      "type": "object",
+      "description": "Represents a user's public profile information.",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "The user's unique ID, matching their Firebase Auth UID."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "The user's email address."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "The user's public display name."
+        },
+        "photoURL": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL of the user's profile picture."
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "student",
+            "teacher",
+            "admin"
+          ],
+          "description": "The user's role in the application."
+        },
+        "classId": {
+          "type": "string",
+          "description": "ID of the class the user belongs to. Foreign key to the 'classes' collection."
+        },
+        "points": {
+          "type": "number",
+          "description": "The total points accumulated by the student."
+        }
+      },
+      "required": [
+        "uid",
+        "email",
+        "role",
+        "points"
+      ]
+    },
+    "Class": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Class",
+      "type": "object",
+      "description": "Represents a class within the school.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the class (e.g., '6th Grade', 'Mrs. Smith\'s Class')."
+        },
+        "teacherIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "An array of teacher UIDs assigned to this class."
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "Behavior": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Behavior",
+      "type": "object",
+      "description": "Defines a specific behavior that can be recorded, either positive or negative.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the behavior (e.g., 'Helped a Classmate')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A short description of the behavior."
+        },
+        "points": {
+          "type": "number",
+          "description": "Points awarded or deducted for this behavior. Positive for good, negative for bad."
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "positive",
+            "negative"
+          ],
+          "description": "The type of behavior."
+        }
+      },
+      "required": [
+        "name",
+        "points",
+        "type"
+      ]
+    },
+    "BehaviorRecord": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Behavior Record",
+      "type": "object",
+      "description": "A record of a specific behavior demonstrated by a student.",
+      "properties": {
+        "studentId": {
+          "type": "string",
+          "description": "The UID of the student who performed the behavior."
+        },
+        "behaviorId": {
+          "type": "string",
+          "description": "The ID of the behavior that was performed."
+        },
+        "teacherId": {
+          "type": "string",
+          "description": "The UID of the teacher who recorded the behavior."
+        },
+        "classId": {
+          "type": "string",
+          "description": "The ID of the class this record belongs to. Denormalized for security rules."
+        },
+        "justification": {
+          "type": "string",
+          "description": "The teacher's justification for the record."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the behavior was recorded."
+        }
+      },
+      "required": [
+        "studentId",
+        "behaviorId",
+        "teacherId",
+        "classId",
+        "justification",
+        "timestamp"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password"
+    ]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Stores all user profile data, including students, teachers, and admins. The document ID is the Firebase Auth UID."
+    },
+    "/classes/{classId}": {
+      "schema": {
+        "$ref": "#/entities/Class"
+      },
+      "description": "Stores information about each class."
+    },
+    "/behaviors/{behaviorId}": {
+      "schema": {
+        "$ref": "#/entities/Behavior"
+      },
+      "description": "Global definitions for all possible behaviors, managed by admins."
+    },
+    "/behaviorRecords/{recordId}": {
+      "schema": {
+        "$ref": "#/entities/BehaviorRecord"
+      },
+      "description": "Log of all behavior records. Access is controlled via classId."
+    }
+  }
+}
